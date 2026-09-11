@@ -248,6 +248,20 @@ h1, h2, h3, p { margin-top: 0; overflow-wrap: anywhere; }
 .honeypot { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
 .form-feedback { margin-top: 16px; padding: 12px; border-left: 3px solid var(--primary); background: #f4e7e9; font-size: 14px; }
 .form-feedback.success { border-color: #177245; background: #e6f2eb; }
+.consultation-modal { position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; padding: 24px; background: rgba(20, 18, 16, .68); backdrop-filter: blur(6px); animation: consultation-modal-in .18s ease-out; }
+.consultation-modal-card { position: relative; width: min(100%, 460px); padding: 36px 32px 30px; border: 1px solid rgba(255,255,255,.6); border-radius: 24px; background: var(--card); color: var(--foreground); box-shadow: 0 24px 80px rgba(0,0,0,.28); text-align: center; }
+.consultation-modal-close { position: absolute; top: 14px; right: 14px; display: grid; width: 44px; height: 44px; place-items: center; border: 1px solid var(--border); border-radius: 999px; background: transparent; color: var(--foreground); cursor: pointer; }
+.consultation-modal-close:hover { background: rgba(0,0,0,.06); }
+.consultation-modal-close:focus-visible, .consultation-modal-action:focus-visible { outline: 3px solid var(--primary); outline-offset: 3px; }
+.consultation-modal-icon { display: grid; width: 64px; height: 64px; margin: 0 auto 18px; place-items: center; border-radius: 20px; }
+.consultation-modal-icon.success { background: #dff4e8; color: #146c43; }
+.consultation-modal-icon.error { background: #fde6e8; color: #a20d26; }
+.consultation-modal-card h2 { margin: 0; font-size: 24px; letter-spacing: -.02em; }
+.consultation-modal-card p { max-width: 36ch; margin: 12px auto 0; color: var(--muted-foreground); font-size: 16px; line-height: 1.7; overflow-wrap: anywhere; }
+.consultation-modal-action { min-height: 48px; margin-top: 24px; padding: 0 24px; border: 0; border-radius: 999px; background: var(--primary); color: white; font: inherit; font-weight: 700; cursor: pointer; }
+.consultation-modal-action:hover { filter: brightness(.94); }
+@keyframes consultation-modal-in { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .consultation-modal { animation: none; } }
 
 footer { display: grid; grid-template-columns: 1fr auto; gap: 24px 48px; max-width: 1440px; margin: 0 auto; padding: 44px clamp(20px, 4vw, 64px); border-top: 1px solid var(--border); font-size: 13px; }
 footer div { display: flex; flex-wrap: wrap; gap: 10px 24px; }

@@ -2,6 +2,7 @@
 
 import axios from "axios";
 import { useEffect, useRef, useState, type FormEvent } from "react";
+import { CheckCircle, WarningCircle, X } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import {
   CONSULTATION_INTEREST_EVENT,
@@ -17,8 +18,10 @@ export function ConsultationForm() {
   const [interest, setInterest] = useState("");
   const [status, setStatus] = useState<"idle" | "pending" | "success" | "error">("idle");
   const [notice, setNotice] = useState("");
+  const [noticeOpen, setNoticeOpen] = useState(false);
   const busy = useRef(false);
   const feedback = useRef<HTMLDivElement>(null);
+  const noticeClose = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     const prefillInterest = (event: Event) => {
@@ -31,6 +34,19 @@ export function ConsultationForm() {
     window.addEventListener(CONSULTATION_INTEREST_EVENT, prefillInterest);
     return () => window.removeEventListener(CONSULTATION_INTEREST_EVENT, prefillInterest);
   }, []);
+
+  useEffect(() => {
+    if (!noticeOpen) return;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setNoticeOpen(false);
+    };
+    document.addEventListener("keydown", closeOnEscape);
+    const focusTimer = window.setTimeout(() => noticeClose.current?.focus(), 0);
+    return () => {
+      document.removeEventListener("keydown", closeOnEscape);
+      window.clearTimeout(focusTimer);
+    };
+  }, [noticeOpen]);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -50,9 +66,11 @@ export function ConsultationForm() {
     busy.current = true;
     setStatus("pending");
     setNotice("");
+    setNoticeOpen(false);
     try {
       const { data } = await axios.post<ApiResponse>("/api/consultation", input, { timeout: 15_000 });
       setStatus("success");
+      setNoticeOpen(true);
       setNotice(data.message ?? "ได้รับคำขอของคุณแล้วครับ");
       setErrors({});
       setInterest("");
@@ -64,6 +82,7 @@ export function ConsultationForm() {
         response?.message ??
           "ยังยืนยันการส่งข้อมูลไม่ได้ กรุณาตรวจสอบการเชื่อมต่อ หรือติดต่อ 063-5167015",
       );
+      setNoticeOpen(true);
       if (response?.errors) setErrors(response.errors);
     } finally {
       busy.current = false;
@@ -162,6 +181,48 @@ export function ConsultationForm() {
       >
         {notice}
       </div>
+      {noticeOpen && notice && (
+        <div
+          className="consultation-modal"
+          role="presentation"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setNoticeOpen(false);
+          }}
+        >
+          <div
+            className="consultation-modal-card"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="consultation-dialog-title"
+            aria-describedby="consultation-dialog-message"
+            onMouseDown={(event) => event.stopPropagation()}
+          >
+            <button
+              ref={noticeClose}
+              type="button"
+              className="consultation-modal-close"
+              aria-label="ปิดหน้าต่างแจ้งเตือน"
+              onClick={() => setNoticeOpen(false)}
+            >
+              <X size={20} weight="bold" aria-hidden="true" />
+            </button>
+            <div className={`consultation-modal-icon ${status}`} aria-hidden="true">
+              {status === "success" ? <CheckCircle size={32} weight="fill" /> : <WarningCircle size={32} weight="fill" />}
+            </div>
+            <h2 id="consultation-dialog-title">
+              {notice.includes("10 นาที")
+                ? "ส่งคำขอซ้ำเร็วเกินไป"
+                : status === "success"
+                  ? "ส่งคำขอสำเร็จ"
+                  : "ส่งคำขอไม่สำเร็จ"}
+            </h2>
+            <p id="consultation-dialog-message">{notice}</p>
+            <button type="button" className="consultation-modal-action" onClick={() => setNoticeOpen(false)}>
+              ปิดหน้าต่าง
+            </button>
+          </div>
+        </div>
+      )}
     </form>
   );
 }
