@@ -1,6 +1,6 @@
 import "server-only";
 import { createAdminClient } from "@supabase/server/core";
-import { validateConsultation } from "@/lib/consultation";
+import { formatConsultationNotification, type Consultation, validateConsultation } from "@/lib/consultation";
 
 export const runtime = "nodejs";
 
@@ -20,6 +20,20 @@ type Database = {
 };
 
 const reply = (body: object, status: number) => Response.json(body, { status, headers: { "Cache-Control": "no-store" } });
+
+async function notifyLine(data: Consultation) {
+  const token = process.env.LINE_CHANNEL_ACCESS_TOKEN;
+  const userId = process.env.LINE_USER_ID;
+  if (!token || !userId) return;
+
+  const response = await fetch("https://api.line.me/v2/bot/message/push", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ to: userId, messages: [{ type: "text", text: formatConsultationNotification(data) }] }),
+    signal: AbortSignal.timeout(5000),
+  });
+  if (!response.ok) throw new Error(`LINE API returned ${response.status}`);
+}
 
 export async function POST(request: Request) {
   const origin = request.headers.get("origin");
@@ -55,6 +69,9 @@ export async function POST(request: Request) {
     }).abortSignal(AbortSignal.timeout(8000));
     if (error?.code === "P0001") return reply({ message: "เบอร์นี้ส่งคำขอแล้ว กรุณารอ 10 นาทีก่อนส่งอีกครั้ง หรือติดต่อทางโทรศัพท์ได้ทันที" }, 429);
     if (error) return reply({ message: "ยังบันทึกข้อมูลไม่สำเร็จ กรุณาลองอีกครั้ง หรือโทร 063-5167015" }, 503);
+    try { await notifyLine(data); } catch (error) {
+      console.error("LINE consultation notification failed", error instanceof Error ? error.message : "Unknown error");
+    }
     return reply({ message: "ขอบคุณที่ไว้วางใจครับ ได้รับคำขอของคุณแล้ว ผมจะติดต่อกลับเพื่อรับฟังและช่วยวางแผนให้เหมาะกับคุณ" }, 201);
   } catch {
     return reply({ message: "ยังบันทึกข้อมูลไม่สำเร็จ กรุณาลองอีกครั้ง หรือโทร 063-5167015" }, 503);

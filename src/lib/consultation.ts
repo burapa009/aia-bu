@@ -17,6 +17,16 @@ export type Consultation = {
   message: string;
 };
 
+export function formatConsultationNotification(data: Consultation) {
+  return [
+    "มีลูกค้าขอคำปรึกษาใหม่",
+    `ชื่อ: ${data.name}`,
+    `โทร: ${data.phone}`,
+    `สนใจ: ${data.interest}`,
+    data.message && `รายละเอียด: ${data.message}`,
+  ].filter(Boolean).join("\n");
+}
+
 export type FieldErrors = Partial<Record<keyof Consultation | "consent", string>>;
 
 export function validateConsultation(input: unknown): {

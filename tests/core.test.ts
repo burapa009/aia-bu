@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { INTERESTS, validateConsultation } from "../src/lib/consultation.ts";
+import { formatConsultationNotification, INTERESTS, validateConsultation } from "../src/lib/consultation.ts";
 import { calculatePremium } from "../src/lib/insurance.ts";
 import { healthHappyPremium } from "../src/lib/health-happy.ts";
 
@@ -33,6 +33,15 @@ test("rejects malformed consultation data", () => {
 
   assert.equal(result.data, null);
   assert.deepEqual(Object.keys(result.errors).sort(), ["consent", "interest", "name", "phone"]);
+});
+
+test("formats a LINE consultation notification", () => {
+  assert.equal(formatConsultationNotification({
+    name: "Test Customer",
+    phone: "0812345678",
+    interest: "Health",
+    message: "",
+  }), "มีลูกค้าขอคำปรึกษาใหม่\nชื่อ: Test Customer\nโทร: 0812345678\nสนใจ: Health");
 });
 
 test("calculates the documented age 35 examples exactly", () => {
